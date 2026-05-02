@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ChatBox from '../components/ChatBox';
 import { SaveHistoryModal } from '../components/SaveHistoryModal';
 import { HistoryTab } from '../components/HistoryTab';
+import RiskScoreCircle from '../components/RiskScoreCircle';
 import { getRecommendedProfessionals, contactProfessional } from '../services/api';
 
 export const Result = () => {
@@ -255,16 +256,9 @@ export const Result = () => {
         {/* Risk Score Card */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Risk Score */}
-            <div className="text-center">
-              <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-4xl font-bold text-indigo-600">{riskScore}</p>
-                  <p className="text-sm text-gray-500">/10</p>
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Risk Score</h3>
-              <p className={`text-lg font-semibold ${riskColor}`}>{riskLevel} Risk</p>
+            {/* Risk Score Circle */}
+            <div>
+              <RiskScoreCircle score={riskScore} label={riskLevel} />
             </div>
 
             {/* Summary Stats */}

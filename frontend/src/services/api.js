@@ -28,7 +28,19 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Don't redirect to login for these endpoints (they should work without auth)
+    const allowedUnauthenticatedEndpoints = [
+      '/upload',
+      '/ai/analyze',
+      '/professionals/recommend',
+      '/chat'
+    ];
+    
+    const isAllowedEndpoint = allowedUnauthenticatedEndpoints.some(
+      endpoint => error.config?.url?.includes(endpoint)
+    );
+
+    if (error.response?.status === 401 && !isAllowedEndpoint) {
       Cookies.remove('token');
       window.location.href = '/login';
     }

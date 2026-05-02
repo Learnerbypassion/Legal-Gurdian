@@ -118,16 +118,23 @@ export const UploadBox = ({ uploading, setUploading, analysisStatus, setAnalysis
 
       // Small delay to show completion state
       setTimeout(() => {
+        // Store analysis data in localStorage for persistence on refresh
+        const resultData = {
+          result: analysisData,
+          fileName: uploadData.filename,
+          documentId: uploadData.documentId,
+          isUnauthenticated: !user,
+          contractText: uploadData.contractText
+        };
+        localStorage.setItem('lastAnalysis', JSON.stringify(resultData));
+
+        // Reset uploading state and navigate
+        setUploading(false);
+        
         // Navigate to result page with analysis
         // Mark if this is from unauthenticated user
         navigate('/result', { 
-          state: { 
-            result: analysisData,
-            fileName: uploadData.filename,
-            documentId: uploadData.documentId,
-            isUnauthenticated: !user,
-            contractText: uploadData.contractText
-          } 
+          state: resultData
         });
       }, 500);
     } catch (err) {

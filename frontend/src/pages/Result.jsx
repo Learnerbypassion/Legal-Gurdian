@@ -11,8 +11,27 @@ import { getRecommendedProfessionals, contactProfessional } from '../services/ap
 export const Result = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const { result, documentId, fileName, isUnauthenticated, contractText } = location.state || {};
+  const { user, logout, loading: authLoading } = useAuth();
+  
+  // Try to get result from location state, fall back to localStorage
+  let resultData = location.state;
+  if (!resultData) {
+    const storedData = localStorage.getItem('lastAnalysis');
+    if (storedData) {
+      try {
+        const parsed = JSON.parse(storedData);
+        // Ensure isUnauthenticated is a boolean
+        if (parsed && typeof parsed.isUnauthenticated !== 'undefined') {
+          parsed.isUnauthenticated = Boolean(parsed.isUnauthenticated);
+        }
+        resultData = parsed;
+      } catch (e) {
+        console.error('Failed to parse stored analysis', e);
+      }
+    }
+  }
+  
+  const { result, documentId, fileName, isUnauthenticated, contractText } = resultData || {};
   const [activeTab, setActiveTab] = useState('summary');
   const [showMenu, setShowMenu] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -22,10 +41,24 @@ export const Result = () => {
 
   // Show modal only once per session for unauthenticated users
   useEffect(() => {
-    if (isUnauthenticated && !sessionStorage.getItem('saveModalDismissed')) {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
+    console.log('=== Modal Debug ===');
+    console.log('result:', !!result);
+    console.log('isUnauthenticated:', isUnauthenticated);
+    console.log('user:', user);
+    console.log('authLoading:', authLoading);
+    
+    // Show modal if:
+    // 1. We have result data
+    // 2. Either isUnauthenticated flag is true OR user is not logged in
+    if (result && (isUnauthenticated || !user)) {
+      console.log('Showing modal');
       setShowSaveModal(true);
+      sessionStorage.setItem('saveModalDismissed', 'true');
     }
-  }, [isUnauthenticated]);
+  }, [result, isUnauthenticated, user, authLoading]);
 
   // Scroll to top when page loads
   useEffect(() => {
@@ -65,7 +98,22 @@ export const Result = () => {
   };
 
   if (!result) {
-    return <AnalysisLoading status="analyzing" />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">No analysis data found. Please upload a document to analyze.</p>
+          <button
+            onClick={() => {
+              localStorage.removeItem('lastAnalysis');
+              navigate('/');
+            }}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const handleLogout = async () => {
@@ -74,6 +122,10 @@ export const Result = () => {
   };
 
   const handleNavigation = (path) => {
+    // Clear analysis data when navigating away from result page
+    if (path === '/') {
+      localStorage.removeItem('lastAnalysis');
+    }
     navigate(path);
     setShowMenu(false);
   };
@@ -94,7 +146,7 @@ export const Result = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleNavigation('/')}>
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
                 <span className="text-white font-bold text-lg">IX</span>
               </div>
@@ -106,7 +158,7 @@ export const Result = () => {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-8">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => handleNavigation('/')}
                 className="text-gray-600 hover:text-gray-900 font-medium transition"
               >
                 Dashboard
@@ -239,7 +291,7 @@ export const Result = () => {
               <p className="text-gray-600">{fileName || 'Document'}</p>
             </div>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => handleNavigation('/')}
               className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition font-medium"
             >
               New Analysis
@@ -492,7 +544,7 @@ export const Result = () => {
         {/* Action Buttons */}
         <div className="mt-8 flex gap-4">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => handleNavigation('/')}
             className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition font-medium"
           >
             New Analysis

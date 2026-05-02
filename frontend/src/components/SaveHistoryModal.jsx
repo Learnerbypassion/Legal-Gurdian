@@ -8,7 +8,8 @@ export const SaveHistoryModal = ({ isOpen, onClose, onSave, fileName }) => {
 
   const handleSave = () => {
     onSave();
-    navigate('/login', { state: { from: 'save-history' } });
+    // Navigate to signup for saving
+    navigate('/signup', { state: { from: 'save-history', shouldSaveAnalysis: true } });
   };
 
   return (

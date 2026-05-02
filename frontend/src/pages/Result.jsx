@@ -26,6 +26,11 @@ export const Result = () => {
     }
   }, [isUnauthenticated]);
 
+  // Scroll to top when page loads
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [result]);
+
   useEffect(() => {
     if (result) {
       // Determine profession type
